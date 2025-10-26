@@ -4,7 +4,7 @@ import streamlit as st
 
 # Initialize session state
 if 'available_players' not in st.session_state:
-    df = pd.read_excel(r"C:\Users\msantoro\Documents\Personal\bball_website\Wellesley BBall Players.xlsx")
+    df = pd.read_excel(r"Wellesley BBall Players.xlsx")
     df["Player"] = df["Last Name"]+", "+df["First Name"]
     df.drop(columns=["Last Name", "First Name"], inplace=True)
     st.session_state.available_players = df
