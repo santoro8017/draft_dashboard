@@ -69,7 +69,7 @@ def update_team(team, df):
 
 # Use service account credentials
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name('.streamlit\draft-476301-7b548ab053cb.json', scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name('draft-476301-3b6cedc7cf29.json', scope)
 
 client = gspread.authorize(creds)
 
