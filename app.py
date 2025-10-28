@@ -62,14 +62,6 @@ def update_team(team, Grade, MW, player):
     return
 
 ######
-# def update_teams(all_worksheets):
-    
-#     for team in teams[2:]:
-#         if team not in st.session_state:
-#             st.session_state[team] = pd.DataFrame(columns=['Grade', 'MW', 'Player'])
-    
-#     return 
-
 st.button("Reset Available Players", on_click=reset_players)
 st.button("Reset Teams", on_click=reset_teams)
 
