@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 from openpyxl import load_workbook
+import os
 
 def reset_players():
     source_sheet = workbook["original_players"]
@@ -62,6 +63,26 @@ def update_team(team, Grade, MW, player):
     return
 
 ######
+FILE_TO_MONITOR = "draft_data.xlsx"
+if 'last_mod_time' not in st.session_state:
+    st.session_state.last_mod_time = os.path.getmtime(FILE_TO_MONITOR) if os.path.exists(FILE_TO_MONITOR) else None
+
+current_mod_time = os.path.getmtime(FILE_TO_MONITOR) if os.path.exists(FILE_TO_MONITOR) else None
+
+st.info(f"current_mod_time: {current_mod_time}")
+st.info(f"last_mod_time: {st.session_state.last_mod_time}")
+st.info(current_mod_time and st.session_state.last_mod_time)
+st.info(current_mod_time and st.session_state.last_mod_time and current_mod_time)
+if current_mod_time and st.session_state.last_mod_time and current_mod_time > st.session_state.last_mod_time:
+    st.session_state.last_mod_time = current_mod_time
+    st.rerun() # This will rerun the script
+elif current_mod_time and not st.session_state.last_mod_time: # File created after app started
+    st.session_state.last_mod_time = current_mod_time
+    st.rerun()
+
+
+
+
 st.button("Reset Available Players", on_click=reset_players)
 st.button("Reset Teams", on_click=reset_teams)
 
