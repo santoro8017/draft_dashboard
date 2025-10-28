@@ -62,14 +62,24 @@ def update_team(team, Grade, MW, player):
 
     return
 
+@st.cache_data(ttl=1) # Cache expires after 3 seconds
+def get_mod_time(filepath):
+    """Reads file content and its last modification timestamp."""
+    try:
+        last_modified_time = os.path.getmtime(filepath)
+        st.info(last_modified_time)
+        return last_modified_time
+    except FileNotFoundError:
+        return None
+    
 ######
 FILE_TO_MONITOR = "draft_data.xlsx"
 if 'last_mod_time' not in st.session_state:
     st.session_state.last_mod_time = os.path.getmtime(FILE_TO_MONITOR) if os.path.exists(FILE_TO_MONITOR) else None
 
-current_mod_time = os.path.getmtime(FILE_TO_MONITOR) if os.path.exists(FILE_TO_MONITOR) else None
+current_mod_time = get_mod_time(FILE_TO_MONITOR)
 
-st.info(f"current_mod_time: {current_mod_time}")
+st.info(f"Current_mod_time: {current_mod_time}")
 st.info(f"last_mod_time: {st.session_state.last_mod_time}")
 st.info(current_mod_time and st.session_state.last_mod_time)
 st.info(current_mod_time and st.session_state.last_mod_time and current_mod_time)
