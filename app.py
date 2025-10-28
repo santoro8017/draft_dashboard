@@ -68,7 +68,6 @@ def get_mod_time(filepath):
     try:
         last_modified_time = os.path.getmtime(filepath)
         st.info(last_modified_time)
-        st.rerun()
         return last_modified_time
     except FileNotFoundError:
         return None
@@ -90,9 +89,6 @@ if current_mod_time and st.session_state.last_mod_time and current_mod_time > st
 elif current_mod_time and not st.session_state.last_mod_time: # File created after app started
     st.session_state.last_mod_time = current_mod_time
     st.rerun()
-
-
-
 
 st.button("Reset Available Players", on_click=reset_players)
 st.button("Reset Teams", on_click=reset_teams)
