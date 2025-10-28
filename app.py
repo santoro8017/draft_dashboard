@@ -85,9 +85,11 @@ st.info(current_mod_time and st.session_state.last_mod_time)
 st.info(current_mod_time and st.session_state.last_mod_time and current_mod_time)
 if current_mod_time and st.session_state.last_mod_time and current_mod_time > st.session_state.last_mod_time:
     st.session_state.last_mod_time = current_mod_time
+    st.info("should be rerun")
     st.rerun() # This will rerun the script
 elif current_mod_time and not st.session_state.last_mod_time: # File created after app started
     st.session_state.last_mod_time = current_mod_time
+    st.info("will be rerun")
     st.rerun()
 
 st.button("Reset Available Players", on_click=reset_players)
