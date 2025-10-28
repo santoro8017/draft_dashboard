@@ -68,10 +68,11 @@ def get_mod_time(filepath):
     try:
         last_modified_time = os.path.getmtime(filepath)
         st.info(last_modified_time)
+        st.rerun()
         return last_modified_time
     except FileNotFoundError:
         return None
-    
+
 ######
 FILE_TO_MONITOR = "draft_data.xlsx"
 if 'last_mod_time' not in st.session_state:
