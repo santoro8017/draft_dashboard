@@ -1,63 +1,66 @@
 import pandas as pd
 import streamlit as st
-
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from gspread_dataframe import set_with_dataframe
+from openpyxl import load_workbook
 
 def reset_players():
-    source_worksheet = spreadsheet.worksheet("original_players")
-    destination_worksheet = spreadsheet.worksheet("available_players")
+    source_sheet = workbook["original_players"]
+    destination_sheet = workbook["available_players"]
 
-    # Read all data from the source worksheet
-    data_to_copy = source_worksheet.get_all_values()
+    for row_index, row in enumerate(source_sheet.iter_rows()):
+        for col_index, cell in enumerate(row):
+            destination_sheet.cell(row=row_index + 1, column=col_index + 1).value = cell.value
 
-    # Write the data to the destination worksheet, starting from cell A1
-    destination_worksheet.update('A1', data_to_copy)
+
+    workbook.save("draft_data.xlsx")
 
     return
 
 def reset_teams():
-    for team in get_teams(all_worksheets):
-        worksheet = spreadsheet.worksheet(team)
-        worksheet.clear()
-        empty_data = worksheet.get_all_values()
-        worksheet.update('A1', empty_data)
+    for team in get_teams():
+        del workbook[team]
+        workbook.create_sheet(team)
+        
+    workbook.save("draft_data.xlsx")
 
     return
 
 def update_available_players_sheet(df):
-    destination_worksheet = spreadsheet.worksheet("available_players")
-    set_with_dataframe(destination_worksheet, df, include_column_header=True)
+
+    with pd.ExcelWriter("draft_data.xlsx", mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+        df.to_excel(writer, sheet_name="available_players", index=False)
 
     return
 
 def get_available_players():
-    worksheet = spreadsheet.worksheet("available_players") # Or by index: worksheet = spreadsheet.get_worksheet(0)
-
     # Read data
-    df = pd.DataFrame(worksheet.get_all_records())
+    df = pd.read_excel("draft_data.xlsx", sheet_name="available_players")
 
     return df
 
 def get_team_players(team):
-    worksheet = spreadsheet.worksheet(team)
-    df = pd.DataFrame(worksheet.get_all_records())
+    df = pd.read_excel("draft_data.xlsx", sheet_name=team)
 
     if not "Grade" in df.columns:
         return pd.DataFrame(columns = ["Grade", "MW", "Player"])
     else:
         return df
 
-def get_teams(all_worksheets):
-    teams = [ws.title for ws in all_worksheets]
+def get_teams():
+    teams = workbook.sheetnames
     return teams[2:]
 
-def update_team(team, df):
-    worksheet = spreadsheet.worksheet(team)
-    set_with_dataframe(worksheet, df, include_column_header=True)
+def update_team(team, Grade, MW, player):
+    sheet = workbook[team]
+    
+    if not sheet['A1'].value:
+        for col_idx, value in enumerate(["Grade", "MW", "Player"], start=1):
+             sheet.cell(row=1, column=col_idx, value=value)
+
+    sheet.append([Grade, MW, player])
+    workbook.save("draft_data.xlsx")
 
     return
+
 ######
 # def update_teams(all_worksheets):
     
@@ -67,46 +70,26 @@ def update_team(team, df):
     
 #     return 
 
-# Use service account credentials
-scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name('draft-476301-3b6cedc7cf29.json', scope)
-
-client = gspread.authorize(creds)
-
-# Open the spreadsheet by name or ID
-spreadsheet = client.open("draft_data")
 st.button("Reset Available Players", on_click=reset_players)
 st.button("Reset Teams", on_click=reset_teams)
 
-# Initialize session state
-# if 'available_players' not in st.session_state:
-#     # Select a worksheet
-#     reset_players()
-#     df = get_available_players()
-
-#     df["Player"] = df["Last Name"]+", "+df["First Name"]
-#     df.drop(columns=["Last Name", "First Name"], inplace=True)
-
-#     st.session_state.available_players = df
-
 # Create team lists and DataFrames based on the user input
-all_worksheets = spreadsheet.worksheets()
+workbook = load_workbook("draft_data.xlsx")
 
 # Display available players table
 st.dataframe(get_available_players())
 
 # Player selection and assignment
 player = st.selectbox('Select player:', get_available_players()["Player"].sort_values(ascending = True).values)
-team = st.selectbox('Select team:', get_teams(all_worksheets))
+team = st.selectbox('Select team:', get_teams())
 
 if st.button('Assign player'):
     available_players = get_available_players()
-    Grade = available_players.query("Player == @player")["Grade"].values
-    MW = available_players.query("Player == @player")["MW"].values
+    Grade = available_players.query("Player == @player")["Grade"].values[0]
+    MW = available_players.query("Player == @player")["MW"].values[0]
     player_info = pd.DataFrame(data={"Grade":Grade, "MW": MW, "Player": [player]})
 
-    updated_team_players = pd.concat([get_team_players(team), player_info])
-    update_team(team, updated_team_players)
+    update_team(team, Grade, MW, player)
 
     # Remove assigned player from available players DataFrame
     available_players = available_players[available_players['Player'] != player]
@@ -115,6 +98,6 @@ if st.button('Assign player'):
     st.rerun()
 
 # Display assigned players tables for each team
-for team in get_teams(all_worksheets):
-    with st.expander(team + ' Players'):
+for team in get_teams():
+    with st.expander(team + ' players'):
         st.dataframe(get_team_players(team))
