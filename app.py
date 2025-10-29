@@ -62,7 +62,9 @@ def update_team(team, Grade, MW, player):
 
     return
 
-@st.cache_data(ttl=1) # Cache expires after 3 seconds
+from datetime import timedelta
+
+@st.cache_data(ttl=timedelta(seconds=1)) # Cache expires after 3 seconds
 def get_mod_time(filepath):
     """Reads file content and its last modification timestamp."""
     try:
