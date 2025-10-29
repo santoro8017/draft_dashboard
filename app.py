@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from openpyxl import load_workbook
 import os
+from streamlit_autorefresh import st_autorefresh
 
 def reset_players():
     source_sheet = workbook["original_players"]
@@ -62,37 +63,40 @@ def update_team(team, Grade, MW, player):
 
     return
 
-from datetime import timedelta
+import time
 
-@st.cache_data(ttl=timedelta(seconds=1)) # Cache expires after 3 seconds
 def get_mod_time(filepath):
     """Reads file content and its last modification timestamp."""
     try:
         last_modified_time = os.path.getmtime(filepath)
+        st.info(f"time: {time.time()}")
         st.info(last_modified_time)
         return last_modified_time
     except FileNotFoundError:
+        st.info("error")
         return None
 
 ######
-FILE_TO_MONITOR = "draft_data.xlsx"
-if 'last_mod_time' not in st.session_state:
-    st.session_state.last_mod_time = os.path.getmtime(FILE_TO_MONITOR) if os.path.exists(FILE_TO_MONITOR) else None
+st_autorefresh(interval=3000, key="data_refresh")
 
-current_mod_time = get_mod_time(FILE_TO_MONITOR)
+# FILE_TO_MONITOR = "draft_data.xlsx"
+# if 'last_mod_time' not in st.session_state:
+#     st.session_state.last_mod_time = os.path.getmtime(FILE_TO_MONITOR) if os.path.exists(FILE_TO_MONITOR) else None
 
-st.info(f"Current_mod_time: {current_mod_time}")
-st.info(f"last_mod_time: {st.session_state.last_mod_time}")
-st.info(current_mod_time and st.session_state.last_mod_time)
-st.info(current_mod_time and st.session_state.last_mod_time and current_mod_time)
-if current_mod_time and st.session_state.last_mod_time and current_mod_time > st.session_state.last_mod_time:
-    st.session_state.last_mod_time = current_mod_time
-    st.info("should be rerun")
-    st.rerun() # This will rerun the script
-elif current_mod_time and not st.session_state.last_mod_time: # File created after app started
-    st.session_state.last_mod_time = current_mod_time
-    st.info("will be rerun")
-    st.rerun()
+# current_mod_time = get_mod_time(FILE_TO_MONITOR)
+
+# st.info(f"Current_mod_time: {current_mod_time}")
+# st.info(f"last_mod_time: {st.session_state.last_mod_time}")
+# st.info(current_mod_time and st.session_state.last_mod_time)
+# st.info(current_mod_time and st.session_state.last_mod_time and current_mod_time)
+# if current_mod_time and st.session_state.last_mod_time and current_mod_time > st.session_state.last_mod_time:
+#     st.session_state.last_mod_time = current_mod_time
+#     st.info("should be rerun")
+#     st.rerun() # This will rerun the script
+# elif current_mod_time and not st.session_state.last_mod_time: # File created after app started
+#     st.session_state.last_mod_time = current_mod_time
+#     st.info("will be rerun")
+#     st.rerun()
 
 st.button("Reset Available Players", on_click=reset_players)
 st.button("Reset Teams", on_click=reset_teams)
