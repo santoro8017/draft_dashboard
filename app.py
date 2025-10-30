@@ -100,7 +100,7 @@ def update_team(team, Grade, MW, player):
 import time
 
 ######
-# st_autorefresh(interval=3000, key="data_refresh")
+st_autorefresh(interval=3000, key="data_refresh")
 with st.sidebar:
     st.button("Reset", on_click=reset)
     st.button("Randomize Draft Order", on_click=randomize)
