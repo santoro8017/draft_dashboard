@@ -4,6 +4,8 @@ from openpyxl import load_workbook
 import os
 from streamlit_autorefresh import st_autorefresh
 
+st.set_page_config(layout='wide')
+
 def reset():
     new_workbook = load_workbook("draft_data_original.xlsx")    
 
@@ -13,7 +15,7 @@ def reset():
 
 def update_available_players_sheet(df):
 
-    with pd.ExcelWriter("draft_data.xlsx", mode='a', engine='openpyxl', header = False, if_sheet_exists='replace') as writer:
+    with pd.ExcelWriter("draft_data.xlsx", mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
         df.to_excel(writer, sheet_name="available_players", index=False)
 
     return
@@ -34,7 +36,6 @@ def get_draft_order():
 
 def get_big_board():
     order = get_draft_order()
-    print(order)
     if order:
         teams = order
     else:
@@ -100,40 +101,41 @@ import time
 
 ######
 # st_autorefresh(interval=3000, key="data_refresh")
-st.button("Reset", on_click=reset)
-st.button("Randomize Draft Order", on_click=randomize)
+with st.sidebar:
+    st.button("Reset", on_click=reset)
+    st.button("Randomize Draft Order", on_click=randomize)
 
 
 # Create team lists and DataFrames based on the user input
 workbook = load_workbook("draft_data.xlsx")
 
 # Display big board
-st.dataframe(get_big_board(), height = 300)
+col1, col2 = st.columns([.6,.4])
+with col1:
+    st.dataframe(get_big_board(), hide_index = True)
 
+    # Player selection and assignment
+    player = st.selectbox('Select player:', get_available_players()["Player"].sort_values(ascending = True).values)
+    team = st.selectbox('Select team:', get_teams())
 
+    if st.button('Assign player'):
+        available_players = get_available_players()
+        Grade = available_players.query("Player == @player")["Grade"].values[0]
+        MW = available_players.query("Player == @player")["MW"].values[0]
+        player_info = pd.DataFrame(data={"Grade":Grade, "MW": MW, "Player": [player]})
+        update_team(team, Grade, MW, player)
 
-# Player selection and assignment
-player = st.selectbox('Select player:', get_available_players()["Player"].sort_values(ascending = True).values)
-team = st.selectbox('Select team:', get_teams())
+        # Remove assigned player from available players DataFrame
+        available_players = available_players[available_players['Player'] != player]
+        update_available_players_sheet(available_players)
 
-if st.button('Assign player'):
-    available_players = get_available_players()
-    Grade = available_players.query("Player == @player")["Grade"].values[0]
-    MW = available_players.query("Player == @player")["MW"].values[0]
-    player_info = pd.DataFrame(data={"Grade":Grade, "MW": MW, "Player": [player]})
-    print(player_info)
-    update_team(team, Grade, MW, player)
+        st.rerun()
 
-    # Remove assigned player from available players DataFrame
-    available_players = available_players[available_players['Player'] != player]
-    update_available_players_sheet(available_players)
+    # Display available players table
+    st.dataframe(get_available_players(), hide_index=True)
 
-    st.rerun()
-
-# Display available players table
-st.dataframe(get_available_players())
-
-# Display assigned players tables for each team
-for team in get_teams():
-    with st.expander(team + ' players'):
-        st.dataframe(get_team_players(team))
+with col2:
+    # Display assigned players tables for each team
+    for team in get_teams():
+        with st.expander(team + ' players'):
+            st.dataframe(get_team_players(team), hide_index=True)
