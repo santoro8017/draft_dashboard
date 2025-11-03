@@ -97,13 +97,18 @@ def update_team(team, Grade, MW, player):
 
     return
 
-import time
+def save_results():
+    df_out = get_big_board()
+    df_out.to_excel("big_board_results.xlsx", index=False)
+
+    workbook.save("final_draft_results.xlsx")
 
 ######
 st_autorefresh(interval=3000, key="data_refresh")
 with st.sidebar:
     st.button("Reset", on_click=reset)
     st.button("Randomize Draft Order", on_click=randomize)
+    st.button("Save results", on_click=save_results)
 
 
 # Create team lists and DataFrames based on the user input
